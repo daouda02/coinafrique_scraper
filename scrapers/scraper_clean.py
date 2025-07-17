@@ -52,6 +52,8 @@ class CoinAfriqueScraperCleaned:
         # Supprime les caractères de nouvelle ligne
         address_clean = address_clean.replace('\n', ' ').replace('\r', ' ')
         
+        address_clean = re.sub(r'[A-Z]{3,}.*$', '', address_clean).strip()
+        
         return address_clean
     
     def extract_number_from_text(self, text: str) -> str:
