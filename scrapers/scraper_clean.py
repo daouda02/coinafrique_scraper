@@ -111,7 +111,7 @@ class CoinAfriqueScraperCleaned:
                     # Extraction de l'adresse (après location_on)
                     address = ""
                     if 'location_on' in container_text:
-                        location_match = re.search(r'location_on([^favorite_border\n]+)', container_text)
+                        location_match = re.search(r'location_on\s*([^0-9]+?)(?=favorite_border|$|\n)', container_text)
                         if location_match:
                             address = location_match.group(1).strip()
                     
