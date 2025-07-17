@@ -81,7 +81,7 @@ def display_stats():
         with col2:
             st.metric("Données brutes", raw_files)
         
-        # Dernière activité - CORRECTION
+        # Dernière activité
         all_files = []
         if os.path.exists('data/cleaned'):
             cleaned_list = [f'data/cleaned/{f}' for f in os.listdir('data/cleaned') if f.endswith('.csv')]
@@ -146,9 +146,9 @@ def page_scraping_cleaned():
             
             if data:
                 # Sauvegarder dans session_state pour persister les données
-                st.session_state.cleaned_data = data
-                st.session_state.cleaned_category = category
-                st.session_state.cleaned_scraper = scraper
+                st.session_state.cleaned_scraped_data = data
+                st.session_state.cleaned_scraped_category = category
+                st.session_state.cleaned_scraper_instance = scraper
                 
                 st.success(f"{len(data)} annonces collectées avec succès!")
                 
@@ -157,9 +157,8 @@ def page_scraping_cleaned():
         except Exception as e:
             st.error(f"Erreur lors du scraping: {str(e)}")
     
-    # Afficher les données si elles existent dans session_state
-    if 'cleaned_data' in st.session_state and st.session_state.cleaned_data:
-        data = st.session_state.cleaned_data
+    if 'cleaned_scraped_data' in st.session_state and st.session_state.cleaned_scraped_data:
+        data = st.session_state.cleaned_scraped_data
         df = pd.DataFrame(data)
         
         col1, col2, col3, col4 = st.columns(4)
@@ -176,7 +175,7 @@ def page_scraping_cleaned():
             st.metric("Avec adresse", adresse_count)
         
         with col4:
-            if st.session_state.cleaned_category != 'terrains':
+            if st.session_state.cleaned_scraped_category != 'terrains':
                 pieces_count = len([d for d in data if d.get('nombre_pieces', '').strip()])
                 st.metric("Avec pièces", pieces_count)
             else:
@@ -195,7 +194,7 @@ def page_scraping_cleaned():
             if st.button("Sauvegarder les données", type="secondary", use_container_width=True):
                 try:
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = f"{st.session_state.cleaned_category}_cleaned_{timestamp}.csv"
+                    filename = f"{st.session_state.cleaned_scraped_category}_cleaned_{timestamp}.csv"
                     
                     # Créer le dossier s'il n'existe pas
                     os.makedirs('data/cleaned', exist_ok=True)
@@ -219,7 +218,7 @@ def page_scraping_cleaned():
                 st.download_button(
                     label="Télécharger CSV",
                     data=csv_data,
-                    file_name=f"{st.session_state.cleaned_category}_cleaned_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    file_name=f"{st.session_state.cleaned_scraped_category}_cleaned_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                     mime="text/csv",
                     use_container_width=True
                 )
@@ -228,12 +227,12 @@ def page_scraping_cleaned():
         
         # Effacer les données
         if st.button("Effacer les données", type="secondary"):
-            if 'cleaned_data' in st.session_state:
-                del st.session_state.cleaned_data
-            if 'cleaned_category' in st.session_state:
-                del st.session_state.cleaned_category
-            if 'cleaned_scraper' in st.session_state:
-                del st.session_state.cleaned_scraper
+            if 'cleaned_scraped_data' in st.session_state:
+                del st.session_state.cleaned_scraped_data
+            if 'cleaned_scraped_category' in st.session_state:
+                del st.session_state.cleaned_scraped_category
+            if 'cleaned_scraper_instance' in st.session_state:
+                del st.session_state.cleaned_scraper_instance
             st.rerun()
 
 def page_scraping_raw():
@@ -278,9 +277,9 @@ def page_scraping_raw():
             
             if data:
                 # Sauvegarder dans session_state pour persister les données
-                st.session_state.raw_data = data
-                st.session_state.raw_category = category
-                st.session_state.raw_scraper = scraper
+                st.session_state.raw_scraped_data = data
+                st.session_state.raw_scraped_category = category
+                st.session_state.raw_scraper_instance = scraper
                 
                 st.success(f"{len(data)} annonces collectées (données brutes)!")
                 
@@ -289,9 +288,8 @@ def page_scraping_raw():
         except Exception as e:
             st.error(f"Erreur lors du scraping: {str(e)}")
     
-    # Afficher les données si elles existent dans session_state
-    if 'raw_data' in st.session_state and st.session_state.raw_data:
-        data = st.session_state.raw_data
+    if 'raw_scraped_data' in st.session_state and st.session_state.raw_scraped_data:
+        data = st.session_state.raw_scraped_data
         df = pd.DataFrame(data)
         
         col1, col2, col3, col4 = st.columns(4)
@@ -322,11 +320,12 @@ def page_scraping_raw():
             if st.button("Sauvegarder les données brutes", type="secondary", use_container_width=True):
                 try:
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = f"{st.session_state.raw_category}_raw_{timestamp}.csv"
+                    filename = f"{st.session_state.raw_scraped_category}_raw_{timestamp}.csv"
                     
+                    # Créer le dossier s'il n'existe pas
                     os.makedirs('data/raw', exist_ok=True)
                     
-                    # Sauvegarder
+                    # Sauvegarder directement
                     filepath = f"data/raw/{filename}"
                     df.to_csv(filepath, index=False, encoding='utf-8')
                     
@@ -345,7 +344,7 @@ def page_scraping_raw():
                 st.download_button(
                     label="Télécharger CSV",
                     data=csv_data,
-                    file_name=f"{st.session_state.raw_category}_raw_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    file_name=f"{st.session_state.raw_scraped_category}_raw_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                     mime="text/csv",
                     use_container_width=True
                 )
@@ -354,12 +353,12 @@ def page_scraping_raw():
         
         # Effacer les données
         if st.button("Effacer les données brutes", type="secondary"):
-            if 'raw_data' in st.session_state:
-                del st.session_state.raw_data
-            if 'raw_category' in st.session_state:
-                del st.session_state.raw_category
-            if 'raw_scraper' in st.session_state:
-                del st.session_state.raw_scraper
+            if 'raw_scraped_data' in st.session_state:
+                del st.session_state.raw_scraped_data
+            if 'raw_scraped_category' in st.session_state:
+                del st.session_state.raw_scraped_category
+            if 'raw_scraper_instance' in st.session_state:
+                del st.session_state.raw_scraper_instance
             st.rerun()
 
 def page_dashboard():
@@ -528,11 +527,11 @@ def display_files_for_download(folder_path, empty_message):
                 st.error(f"Erreur: {str(e)}")
 
 def page_evaluation():
-    """Page d'évaluation avec formulaire Kobo intégré"""
+    """Page d'évaluation avec Kobo """
     st.header("Évaluation CoinAfrique Scraping")
     st.markdown("Merci de donner votre avis pour m'aider à améliorer l'application !")
     
-    with st.expander("Voir le formulaire intégré", expanded=True):
+    with st.expander("Voir le formulaire", expanded=True):
         st.markdown("""
         <div style="text-align: center;">
             <iframe src="https://ee.kobotoolbox.org/i/icgDbNfi" 
